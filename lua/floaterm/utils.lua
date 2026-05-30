@@ -45,7 +45,39 @@ M.gen_term_bufs = function()
    end
 end
 
-M.set_termwin_hl = function() vim.wo[state.win].winhl = 'Normal:exdarkbg,floatBorder:exdarkborder' end
+M.set_termwin_hl = function() vim.wo[state.win].winhl = 'Normal:FloatermNormal,FloatBorder:FloatermBorder' end
+
+M.set_sidebar_hl = function() vim.wo[state.sidewin].winhl = 'Normal:NormalFloat,FloatBorder:FloatBorder' end
+
+-- Define our highlight groups from the current colorscheme. Recomputed on demand
+-- (open + ColorScheme) so they track theme changes. Terminal bg/border mirror
+-- volt's logic: the Normal background darkened a touch.
+M.set_highlights = function()
+   local color = require('volt.color')
+   local normal = api.nvim_get_hl(0, { name = 'Normal', link = false })
+   local normal_bg = normal.bg and ('#%06x'):format(normal.bg) or '#000000'
+   local darker = color.change_hex_lightness(normal_bg, -3)
+   local diffadd = api.nvim_get_hl(0, { name = 'DiffAdd', link = false })
+
+   api.nvim_set_hl(0, 'FloatermNormal', { bg = darker })
+   api.nvim_set_hl(0, 'FloatermBorder', { bg = darker, fg = darker })
+   api.nvim_set_hl(0, 'FloatermActive', { fg = diffadd.fg })
+end
+
+-- Buffer-local keymaps for the sidebar window
+M.set_sidebar_keymaps = function()
+   local fapi = require('floaterm.api')
+   local opts = { buffer = state.sidebuf }
+
+   map('n', 'e', fapi.edit_name, opts)
+   map('n', 'a', fapi.new_term, opts)
+   map('n', 'd', fapi.delete_term, opts)
+
+   map('n', '<C-l>', fapi.switch_wins, opts)
+   map('n', '<C-h>', fapi.switch_wins, opts)
+   map('n', '<C-j>', function() fapi.cycle_term_bufs('next') end, opts)
+   map('n', '<C-k>', function() fapi.cycle_term_bufs('prev') end, opts)
+end
 
 M.switch_buf = function(buf)
    state.buf = buf

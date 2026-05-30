@@ -24,6 +24,7 @@ local num_icons = {
    '󰎹',
    '󰎼',
 }
+
 -- ┌──────────────────────────────────────────────────────────────────────┐
 -- │                          Sidebar (volt UI)                           │
 -- └──────────────────────────────────────────────────────────────────────┘
@@ -34,7 +35,7 @@ local function sidebar_lines()
 
    for i, v in ipairs(state.terminals) do
       local label = '  ' .. (v.name or 'term')
-      local hl = state.buf == v.buf and 'ExGreen' or 'Comment'
+      local hl = state.buf == v.buf and 'FloatermActive' or 'Comment'
       local actions = { click = function() utils.switch_buf(v.buf) end }
       local line = { { label, hl, actions }, { '_pad_' }, { num_icons[i] or tostring(i), hl } }
       table.insert(lines, voltui.hpad(line, 18))
@@ -45,26 +46,11 @@ local function sidebar_lines()
       table.insert(lines, {})
    end
 
-   table.insert(lines, { { 'a - add', 'comment' } })
-   table.insert(lines, { { 'e - edit', 'comment' } })
-   table.insert(lines, { { 'd - delete', 'comment' } })
+   table.insert(lines, { { 'a - add', 'Comment' } })
+   table.insert(lines, { { 'e - edit', 'Comment' } })
+   table.insert(lines, { { 'd - delete', 'Comment' } })
 
    return lines
-end
-
--- Buffer-local keymaps for the sidebar window
-local function set_sidebar_keymaps()
-   local map = vim.keymap.set
-   local fapi = require('floaterm.api')
-   local opts = { buffer = state.sidebuf }
-
-   map('n', 'e', fapi.edit_name, opts)
-   map('n', 'a', fapi.new_term, opts)
-   map('n', 'd', fapi.delete_term, opts)
-   map('n', '<C-l>', fapi.switch_wins, opts)
-   map('n', '<C-h>', fapi.switch_wins, opts)
-   map('n', '<C-j>', function() fapi.cycle_term_bufs('next') end, opts)
-   map('n', '<C-k>', function() fapi.cycle_term_bufs('prev') end, opts)
 end
 
 -- ┌──────────────────────────────────────────────────────────────────────┐
@@ -77,6 +63,12 @@ M.setup = function(opts)
    local maps = state.config.mappings
    if maps.toggle then vim.keymap.set({ 'n', 't' }, maps.toggle, M.toggle, { desc = 'Floaterm: Toggle' }) end
    if maps.send then vim.keymap.set('n', maps.send, function() M.send() end, { desc = 'Floaterm: Run command' }) end
+
+   -- Keep our highlights in sync with the colorscheme (restyles an open floaterm live)
+   api.nvim_create_autocmd('ColorScheme', {
+      group = api.nvim_create_augroup('Floaterm', { clear = true }),
+      callback = utils.set_highlights,
+   })
 end
 
 M.is_open = function() return state.volt_set == true end
@@ -131,9 +123,11 @@ M.open = function()
    }
 
    state.sidewin = api.nvim_open_win(state.sidebuf, true, sidebar_win_opts)
+   utils.set_sidebar_hl()
+   utils.set_highlights()
 
    -- A single {char, hl} entry repeats on all sides: 1-cell blank padding, no visible line
-   local term_border = { { ' ', 'exdarkborder' } }
+   local term_border = { { ' ', 'FloatermBorder' } }
 
    state.term_win_opts = {
       row = -1,
@@ -147,30 +141,19 @@ M.open = function()
       zindex = 100,
    }
 
-   api.nvim_win_set_hl_ns(state.sidewin, state.ns)
-
-   api.nvim_set_hl(state.ns, 'floatBorder', { link = 'exblack2border' })
-   api.nvim_set_hl(state.ns, 'Normal', { link = 'exblack2bg' })
-
    volt.gen_data({
       { buf = state.sidebuf, ns = state.ns, layout = { { lines = sidebar_lines, name = 'bufs' } }, xpad = 1 },
    })
-
    api.nvim_set_option_value('modifiable', true, { buf = state.sidebuf })
-
    volt.run(state.sidebuf, { h = sidebar_win_opts.height, w = sidebar_win_opts.width })
+   utils.set_sidebar_keymaps()
+   vim.bo[state.sidebuf].ft = 'FloatermSidebar'
 
    state.win = api.nvim_open_win(state.buf, true, state.term_win_opts)
-
    utils.set_termwin_hl()
    utils.switch_buf(state.buf)
 
-   set_sidebar_keymaps()
-
-   vim.bo[state.sidebuf].ft = 'FloatermSidebar'
-
    local grp = api.nvim_create_augroup('FloatermAu', { clear = true })
-
    api.nvim_create_autocmd('WinClosed', {
       group = grp,
       callback = function(args)
