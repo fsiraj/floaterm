@@ -1,6 +1,7 @@
 local M = {
   ns = vim.api.nvim_create_namespace "Floaterm",
   terminals = nil,
+  is_open = false,
   prev_win_focussed = 0,
 
   config = {

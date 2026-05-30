@@ -2,8 +2,14 @@ local M = {}
 local api = vim.api
 local map = vim.keymap.set
 local state = require('floaterm.state')
+local volt = require('volt')
 local volt_redraw = require('volt').redraw
+local voltui = require('volt.ui')
 local shell = vim.o.shell
+
+local resize_timer
+local resize_debounce = 100
+local sidebar_w = 20
 
 -- Resolve a size dimension to absolute cells.
 -- `value`/`max` <= 1 are fractions of `total`; larger values are absolute cells.
@@ -45,6 +51,43 @@ M.gen_term_bufs = function()
    end
 end
 
+local num_icons = {
+   '󰎡',
+   '󰎤',
+   '󰎧',
+   '󰎪',
+   '󰎭',
+   '󰎱',
+   '󰎳',
+   '󰎶',
+   '󰎹',
+   '󰎼',
+}
+
+-- volt `lines` function: the terminal list plus the help footer
+M.sidebar_lines = function()
+   local lines = {}
+
+   for i, v in ipairs(state.terminals) do
+      local label = '  ' .. (v.name or 'term')
+      local hl = state.buf == v.buf and 'FloatermActive' or 'Comment'
+      local actions = { click = function() M.switch_buf(v.buf) end }
+      local line = { { label, hl, actions }, { '_pad_' }, { num_icons[i] or tostring(i), hl } }
+      table.insert(lines, voltui.hpad(line, 18))
+   end
+
+   local empty_lines_to_fill = state.h - #lines - 3
+   for _ = 1, empty_lines_to_fill, 1 do
+      table.insert(lines, {})
+   end
+
+   table.insert(lines, { { 'a - add', 'Comment' } })
+   table.insert(lines, { { 'e - edit', 'Comment' } })
+   table.insert(lines, { { 'd - delete', 'Comment' } })
+
+   return lines
+end
+
 M.set_termwin_hl = function() vim.wo[state.win].winhl = 'Normal:FloatermNormal,FloatBorder:FloatermBorder' end
 
 M.set_sidebar_hl = function() vim.wo[state.sidewin].winhl = 'Normal:NormalFloat,FloatBorder:FloatBorder' end
@@ -79,6 +122,47 @@ M.set_sidebar_keymaps = function()
    map('n', '<C-k>', function() fapi.cycle_term_bufs('prev') end, opts)
 end
 
+-- Build and render the sidebar window + its volt content and keymaps
+M.render_sidebar = function(pos_row, pos_col)
+   state.sidebar_win_opts = {
+      row = pos_row,
+      col = pos_col,
+      width = sidebar_w,
+      height = state.h,
+      relative = 'editor',
+      style = 'minimal',
+      border = 'single',
+      zindex = 100,
+   }
+   state.sidewin = api.nvim_open_win(state.sidebuf, true, state.sidebar_win_opts)
+   M.set_sidebar_hl()
+
+   volt.gen_data({
+      { buf = state.sidebuf, ns = state.ns, layout = { { lines = M.sidebar_lines, name = 'bufs' } }, xpad = 1 },
+   })
+   api.nvim_set_option_value('modifiable', true, { buf = state.sidebuf })
+   volt.run(state.sidebuf, { h = state.sidebar_win_opts.height, w = state.sidebar_win_opts.width })
+   M.set_sidebar_keymaps()
+   vim.bo[state.sidebuf].ft = 'FloatermSidebar'
+end
+
+-- Build and render the terminal window (anchored to the sidebar)
+M.render_terminal = function()
+   state.term_win_opts = {
+      row = -1,
+      col = sidebar_w + 1,
+      win = state.sidewin,
+      width = state.w - sidebar_w,
+      height = state.h,
+      relative = 'win',
+      style = 'minimal',
+      border = { { ' ', 'FloatermBorder' } },
+      zindex = 100,
+   }
+   state.win = api.nvim_open_win(state.buf, true, state.term_win_opts)
+   M.set_termwin_hl()
+end
+
 M.switch_buf = function(buf)
    state.buf = buf
 
@@ -109,11 +193,10 @@ M.switch_buf = function(buf)
       require('volt').mappings({
          bufs = { state.buf, state.sidebuf },
          after_close = function()
-            state.volt_set = false
+            state.is_open = false
             state.terminals = nil
             state.buf = nil
             state.sidebuf = nil
-            api.nvim_del_augroup_by_name('FloatermAu')
          end,
       })
 
@@ -145,6 +228,47 @@ M.get_buf_on_cursor = function()
    end
 
    return row
+end
+
+-- Register floaterm's autocmds once. The state.is_open guards make them no-ops
+-- while floaterm is closed, so they don't need re-registering per open.
+M.set_autocmds = function()
+   local floaterm = require('floaterm')
+   local grp = api.nvim_create_augroup('Floaterm', { clear = true })
+
+   -- Keep our highlights in sync with the colorscheme (restyles an open floaterm live)
+   api.nvim_create_autocmd('ColorScheme', { group = grp, callback = M.set_highlights })
+
+   -- A managed terminal window closed (process exit, :q, ...) -> drop it from the list
+   api.nvim_create_autocmd('WinClosed', {
+      group = grp,
+      callback = function(args)
+         vim.schedule(function()
+            if state.is_open and M.get_term_by_key(args.buf) then require('floaterm.api').delete_term(args.buf) end
+         end)
+      end,
+   })
+
+   -- Recompute geometry on editor resize by reopening (preserves terminal buffers).
+   -- The reopen is deferred a tick so the close's scheduled WinClosed handler runs
+   -- (and skips delete_term) before is_open is true again.
+   api.nvim_create_autocmd('VimResized', {
+      group = grp,
+      callback = function()
+         if not state.is_open then return end
+         resize_timer = resize_timer or assert(vim.uv.new_timer())
+         resize_timer:stop()
+         resize_timer:start(
+            resize_debounce,
+            0,
+            vim.schedule_wrap(function()
+               if not state.is_open then return end
+               floaterm.close()
+               vim.schedule(floaterm.open)
+            end)
+         )
+      end,
+   })
 end
 
 return M
