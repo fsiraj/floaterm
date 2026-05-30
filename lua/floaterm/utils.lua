@@ -85,17 +85,21 @@ end
 
 M.set_termwin_hl = function() vim.wo[state.win].winhl = 'Normal:FloatermNormal,FloatBorder:FloatermBorder' end
 
-M.set_sidebar_hl = function() vim.wo[state.sidewin].winhl = 'Normal:NormalFloat,FloatBorder:FloatBorder' end
+M.set_sidebar_hl = function() vim.wo[state.sidewin].winhl = 'Normal:FloatermSidebarNormal,FloatBorder:FloatermSidebarBorder' end
 
 M.set_highlights = function()
    local color = require('volt.color')
    local normal = api.nvim_get_hl(0, { name = 'Normal', link = false })
    local normal_bg = normal.bg and ('#%06x'):format(normal.bg) or '#000000'
-   local darker = color.change_hex_lightness(normal_bg, -3)
+   local contrast = state.config.contrast
+   local darker = color.change_hex_lightness(normal_bg, -contrast)
+   local lighter = color.change_hex_lightness(normal_bg, contrast)
    local diffadd = api.nvim_get_hl(0, { name = 'DiffAdd', link = false })
 
    api.nvim_set_hl(0, 'FloatermNormal', { bg = darker })
    api.nvim_set_hl(0, 'FloatermBorder', { bg = darker, fg = darker })
+   api.nvim_set_hl(0, 'FloatermSidebarNormal', { bg = lighter })
+   api.nvim_set_hl(0, 'FloatermSidebarBorder', { bg = lighter, fg = lighter })
    api.nvim_set_hl(0, 'FloatermActive', { fg = diffadd.fg })
 end
 
