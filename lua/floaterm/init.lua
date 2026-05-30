@@ -12,6 +12,20 @@ local resize_debounce = 300
 
 M.setup = function(opts) state.config = vim.tbl_deep_extend('force', state.config, opts or {}) end
 
+M.is_open = function() return state.volt_set == true end
+
+-- Switch to the terminal named `name` (creating it with `cmd` if absent), opening the UI first.
+M.send = function(cmd, name)
+   name = name or cmd
+   if not M.is_open() then M.open() end
+   local term = utils.get_term_by_key(name, 'name')
+   if term then
+      utils.switch_buf(term[2].buf)
+   else
+      require('floaterm.api').new_term({ cmd = cmd, name = name })
+   end
+end
+
 M.open = function()
    state.volt_set = true
    state.sidebuf = state.sidebuf or api.nvim_create_buf(false, true)
@@ -136,7 +150,7 @@ M.open = function()
       group = grp,
       callback = function(args)
          vim.schedule(function()
-            if state.volt_set and utils.get_term_by_key(args.buf) then require('floaterm.api').delete_term(args.buf) end
+            if M.is_open() and utils.get_term_by_key(args.buf) then require('floaterm.api').delete_term(args.buf) end
          end)
       end,
    })
@@ -147,15 +161,15 @@ M.open = function()
    api.nvim_create_autocmd('VimResized', {
       group = grp,
       callback = function()
-         if not state.volt_set then return end
+         if not M.is_open() then return end
          resize_timer = resize_timer or assert(vim.uv.new_timer())
          resize_timer:stop()
          resize_timer:start(
             resize_debounce,
             0,
             vim.schedule_wrap(function()
-               if not state.volt_set then return end
-               M.toggle()
+               if not M.is_open() then return end
+               M.close()
                vim.schedule(M.open)
             end)
          )
@@ -163,14 +177,18 @@ M.open = function()
    })
 end
 
+M.close = function()
+   api.nvim_win_close(state.win, false)
+   api.nvim_win_close(state.barwin, false)
+   api.nvim_win_close(state.sidewin, false)
+   utils.close_timers()
+   state.volt_set = false
+   api.nvim_set_current_win(state.prev_win_focussed)
+end
+
 M.toggle = function()
-   if state.volt_set then
-      api.nvim_win_close(state.win, false)
-      api.nvim_win_close(state.barwin, false)
-      api.nvim_win_close(state.sidewin, false)
-      utils.close_timers()
-      state.volt_set = false
-      api.nvim_set_current_win(state.prev_win_focussed)
+   if M.is_open() then
+      M.close()
    else
       M.open()
    end

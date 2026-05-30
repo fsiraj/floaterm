@@ -21,7 +21,7 @@ M.items = function()
 
   for i, v in ipairs(state.terminals) do
     local icon = "" .. "  "
-    local label = icon .. (v.name or "Terminal")
+    local label = icon .. (v.name or "term")
     local hl = state.buf == v.buf and "ExGreen" or "Comment"
     local actions = {
       click = function()
