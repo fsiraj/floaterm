@@ -7,11 +7,4 @@ M.sidebar = {
   },
 }
 
-M.bar = {
-  {
-    lines = require("floaterm.ui").bar,
-    name = "bar",
-  },
-}
-
 return M

@@ -46,19 +46,12 @@ M.gen_term_bufs = function()
    end
 end
 
-M.set_termwin_hl = function()
-   if state.config.border then
-      vim.wo[state.win].winhl = 'Normal:normal,floatborder:comment'
-   else
-      vim.wo[state.win].winhl = 'Normal:exdarkbg,floatBorder:exdarkborder'
-   end
-end
+M.set_termwin_hl = function() vim.wo[state.win].winhl = 'Normal:exdarkbg,floatBorder:exdarkborder' end
 
 M.switch_buf = function(buf)
    state.buf = buf
 
    volt_redraw(state.sidebuf, 'bufs')
-   volt_redraw(state.barbuf, 'bar')
 
    if not api.nvim_win_is_valid(state.win) then
       state.win = api.nvim_open_win(state.buf, true, state.term_win_opts)
@@ -73,7 +66,6 @@ M.switch_buf = function(buf)
    if vim.bo[buf].buftype ~= 'terminal' then
       vim.bo[buf].ft = 'Floaterm'
       M.convert_buf2term(details[1].cmd)
-      volt_redraw(state.barbuf, 'bar')
 
       map({ 't', 'n' }, '<C-h>', function() require('floaterm.api').switch_wins() end, { buffer = state.buf })
 
@@ -84,20 +76,18 @@ M.switch_buf = function(buf)
       map('n', '<C-l>', function() require('floaterm.api').switch_wins() end, { buffer = state.buf })
 
       require('volt').mappings({
-         bufs = { state.buf, state.sidebuf, state.barbuf },
+         bufs = { state.buf, state.sidebuf },
          after_close = function()
-            M.close_timers()
             state.volt_set = false
             state.terminals = nil
             state.buf = nil
             state.sidebuf = nil
-            state.barbuf = nil
             api.nvim_del_augroup_by_name('FloatermAu')
          end,
       })
 
       -- Remove volt's default close/cycle maps in favour of our own navigation
-      for _, b in ipairs({ state.buf, state.sidebuf, state.barbuf }) do
+      for _, b in ipairs({ state.buf, state.sidebuf }) do
          for _, key in ipairs({ 'q', '<Esc>', '<C-t>' }) do
             pcall(vim.keymap.del, 'n', key, { buffer = b })
          end
@@ -126,12 +116,6 @@ M.get_buf_on_cursor = function()
    end
 
    return row
-end
-
-M.close_timers = function()
-   state.bar_redraw_timer:stop()
-   state.bar_redraw_timer:close()
-   state.bar_redraw_timer = nil
 end
 
 return M

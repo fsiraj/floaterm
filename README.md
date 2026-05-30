@@ -2,7 +2,6 @@
 
 A beautiful toggleable floating window for managing terminal buffers within Neovim
 
-![floaterm-with-border](https://github.com/user-attachments/assets/8a51aeff-dcc5-477f-a282-9b48a1e5bf2b)
 ![floaterm-noborder](https://github.com/user-attachments/assets/15e19849-69e6-432b-8fd9-7ffaad872e28)
 
 ## Install 
@@ -20,8 +19,6 @@ A beautiful toggleable floating window for managing terminal buffers within Neov
 
 ```lua
  {
-    border = false,
-
     -- h/w: a value <= 1 is a fraction of the editor; a larger value is absolute cells.
     -- max_h/max_w: optional caps using the same semantics (nil = editor size).
     -- e.g. { h = 0.9, w = 200, max_w = 0.9 } -> 200 cols, capped at 90% of the editor.
