@@ -18,13 +18,6 @@ end
 M.new_term = function(opts)
   opts = opts or {}
 
-  if opts.name == "auto" then
-    vim.ui.input({ prompt = "   Enter name: " }, function(input)
-      opts.name = input
-      vim.api.nvim_echo({}, false, {})
-    end)
-  end
-
   local details = utils.new_term(opts)
   table.insert(state.terminals, details)
 

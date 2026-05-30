@@ -27,7 +27,6 @@ end
 M.new_term = function(opts)
    local defaults = {
       buf = api.nvim_create_buf(false, true),
-      time = os.date('%H:%M'),
       name = 'term',
    }
 
@@ -92,8 +91,6 @@ M.switch_buf = function(buf)
             pcall(vim.keymap.del, 'n', key, { buffer = b })
          end
       end
-
-      if state.config.mappings.term then state.config.mappings.term(state.buf) end
    end
 
    if state.config.autoinsert then vim.cmd.startinsert() end

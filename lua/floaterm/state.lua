@@ -10,11 +10,8 @@ local M = {
     -- max_h/max_w: optional caps using the same semantics. nil = editor size.
     size = { h = 0.6, w = 0.7, max_h = nil, max_w = nil },
 
-    -- { row , col } or fn() returning the table
-    position = nil,
-
-    -- must be functions
-    mappings = { sidebar = nil, term = nil },
+    -- toggle/send: optional global keymap lhs (e.g. "<C-t>") wired up in setup().
+    mappings = { toggle = nil, send = nil },
     terminals = {
       { name = "main" },
     },

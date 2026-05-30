@@ -24,8 +24,8 @@ A beautiful toggleable floating window for managing terminal buffers within Neov
     -- e.g. { h = 0.9, w = 200, max_w = 0.9 } -> 200 cols, capped at 90% of the editor.
     size = { h = 0.6, w = 0.7, max_h = nil, max_w = nil },
 
-    -- to use, make this func(buf)
-    mappings = { sidebar = nil, term = nil},
+    -- optional global keymap lhs, wired up in setup()
+    mappings = { toggle = nil, send = nil },
 
     -- Default sets of terminals you'd like to open
     terminals = {
@@ -52,16 +52,18 @@ These mappings work in both the sidebar and the terminal buffer:
 
 > The default `volt` <kbd>q</kbd> / <kbd>Esc</kbd> / <kbd>Ctrl + t</kbd> mappings are removed so they don't interfere with terminal use.
 
-Add new mapping
+### Configurable keymaps
 
-```lua 
+Set `mappings.toggle` / `mappings.send` to a key (lhs) and `setup()` wires them up globally:
+
+```lua
   {
      mappings = {
-       term = function(buf)
-         vim.keymap.set({ "n", "t" }, "<C-p>", function()
-           require("floaterm.api").cycle_term_bufs "prev"
-         end, { buffer = buf })
-       end,
+       toggle = "<C-t>",      -- toggle the floaterm window (normal + terminal mode)
+       send = "<Leader>rc",   -- prompt for a command and run it in a named terminal
      },
   },
 ```
+
+For scripted use, call the API directly — e.g. `require("floaterm").send("btop +t", "btop")`
+to open (or focus) a terminal named `btop` running `btop +t`.
