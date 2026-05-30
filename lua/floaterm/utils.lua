@@ -9,7 +9,6 @@ local shell = vim.o.shell
 
 local resize_timer
 local resize_debounce = 100
-local sidebar_w = 20
 
 -- Resolve a size dimension to absolute cells.
 -- `value`/`max` <= 1 are fractions of `total`; larger values are absolute cells.
@@ -124,6 +123,7 @@ end
 
 -- Build and render the sidebar window + its volt content and keymaps
 M.render_sidebar = function(pos_row, pos_col)
+   local sidebar_w = state.config.sidebar_w
    state.sidebar_win_opts = {
       row = pos_row,
       col = pos_col,
@@ -148,6 +148,7 @@ end
 
 -- Build and render the terminal window (anchored to the sidebar)
 M.render_terminal = function()
+   local sidebar_w = state.config.sidebar_w
    state.term_win_opts = {
       row = -1,
       col = sidebar_w + 1,
