@@ -82,6 +82,10 @@ M.switch_buf = function(buf)
       require("floaterm.api").cycle_term_bufs "prev"
     end, { buffer = state.buf })
 
+    map("n", "<C-l>", function()
+      require("floaterm.api").switch_wins()
+    end, { buffer = state.buf })
+
     require("volt").mappings {
       bufs = { state.buf, state.sidebuf, state.barbuf },
       after_close = function()
@@ -94,6 +98,13 @@ M.switch_buf = function(buf)
         api.nvim_del_augroup_by_name "FloatermAu"
       end,
     }
+
+    -- Remove volt's default close/cycle maps in favour of our own navigation
+    for _, b in ipairs { state.buf, state.sidebuf, state.barbuf } do
+      for _, key in ipairs { "q", "<Esc>", "<C-t>" } do
+        pcall(vim.keymap.del, "n", key, { buffer = b })
+      end
+    end
 
     if state.config.mappings.term then
       state.config.mappings.term(state.buf)

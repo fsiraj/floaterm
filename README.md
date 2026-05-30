@@ -41,13 +41,15 @@ A beautiful toggleable floating window for managing terminal buffers within Neov
 This are the mappings for sidebar 
 - <kbd>a</kbd> -> add new terminal
 - <kbd>e</kbd> -> edit terminal name
+- <kbd>d</kbd> -> delete terminal
 - Pressing any number within sidebar will switch to that terminal
 
+These mappings work in both the sidebar and the terminal buffer:
+- <kbd>Ctrl + h</kbd> / <kbd>Ctrl + l</kbd> -> Switch between sidebar and terminal
+- <kbd>Ctrl + j</kbd> -> Cycle to next terminal
+- <kbd>Ctrl + k</kbd> -> Cycle to prev terminal
 
-Must be pressed in main terminal buffer
-- <kbd>Ctrl + h</kbd> -> Switch to sidebar
-- <kbd>Ctrl + j</kbd> -> Cycle to prev terminal
-- <kbd>Ctrl + k</kbd> -> Cycle to next terminal
+> The default `volt` <kbd>q</kbd> / <kbd>Esc</kbd> / <kbd>Ctrl + t</kbd> mappings are removed so they don't interfere with terminal use.
 
 Add new mapping
 
