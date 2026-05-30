@@ -21,16 +21,20 @@ A beautiful toggleable floating window for managing terminal buffers within Neov
 ```lua
  {
     border = false,
-    size = { h = 60, w = 70 },
+
+    -- h/w: a value <= 1 is a fraction of the editor; a larger value is absolute cells.
+    -- max_h/max_w: optional caps using the same semantics (nil = editor size).
+    -- e.g. { h = 0.9, w = 200, max_w = 0.9 } -> 200 cols, capped at 90% of the editor.
+    size = { h = 0.6, w = 0.7, max_h = nil, max_w = nil },
 
     -- to use, make this func(buf)
     mappings = { sidebar = nil, term = nil},
 
     -- Default sets of terminals you'd like to open
     terminals = {
-      { name = "Terminal" },
+      { name = "main" },
       -- cmd can be function too
-      { name = "Terminal", cmd = "neofetch" },
+      { name = "main", cmd = "neofetch" },
       -- More terminals
     },
 }

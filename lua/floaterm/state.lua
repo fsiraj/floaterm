@@ -7,7 +7,10 @@ local M = {
   config = {
     border = false,
     autoinsert = true,
-    size = { h = 60, w = 70 },
+
+    -- h/w: a value <= 1 is a fraction of the editor; a larger value is absolute cells.
+    -- max_h/max_w: optional caps using the same semantics. nil = editor size.
+    size = { h = 0.6, w = 0.7, max_h = nil, max_w = nil },
 
     -- { row , col } or fn() returning the table
     position = nil,
@@ -15,7 +18,7 @@ local M = {
     -- must be functions
     mappings = { sidebar = nil, term = nil },
     terminals = {
-      { name = "Terminal" },
+      { name = "main" },
     },
   },
 }

@@ -5,6 +5,15 @@ local state = require "floaterm.state"
 local volt_redraw = require("volt").redraw
 local shell = vim.o.shell
 
+-- Resolve a size dimension to absolute cells.
+-- `value`/`max` <= 1 are fractions of `total`; larger values are absolute cells.
+-- `max` is an optional cap (nil clamps to `total`).
+M.resolve_dim = function(value, total, max)
+  local n = value <= 1 and total * value or value
+  local cap = max and (max <= 1 and total * max or max) or total
+  return math.floor(math.min(n, cap))
+end
+
 M.convert_buf2term = function(cmd)
   if cmd then
     cmd = type(cmd) == "function" and cmd() or cmd
