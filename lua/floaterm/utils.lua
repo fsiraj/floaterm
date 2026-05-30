@@ -10,9 +10,6 @@ local shell = vim.o.shell
 local resize_timer
 local resize_debounce = 100
 
--- Resolve a size dimension to absolute cells.
--- `value`/`max` <= 1 are fractions of `total`; larger values are absolute cells.
--- `max` is an optional cap (nil clamps to `total`).
 M.resolve_dim = function(value, total, max)
    local n = value <= 1 and total * value or value
    local cap = max and (max <= 1 and total * max or max) or total
@@ -63,7 +60,6 @@ local num_icons = {
    '󰎼',
 }
 
--- volt `lines` function: the terminal list plus the help footer
 M.sidebar_lines = function()
    local lines = {}
 
@@ -91,9 +87,6 @@ M.set_termwin_hl = function() vim.wo[state.win].winhl = 'Normal:FloatermNormal,F
 
 M.set_sidebar_hl = function() vim.wo[state.sidewin].winhl = 'Normal:NormalFloat,FloatBorder:FloatBorder' end
 
--- Define our highlight groups from the current colorscheme. Recomputed on demand
--- (open + ColorScheme) so they track theme changes. Terminal bg/border mirror
--- volt's logic: the Normal background darkened a touch.
 M.set_highlights = function()
    local color = require('volt.color')
    local normal = api.nvim_get_hl(0, { name = 'Normal', link = false })
@@ -106,7 +99,6 @@ M.set_highlights = function()
    api.nvim_set_hl(0, 'FloatermActive', { fg = diffadd.fg })
 end
 
--- Buffer-local keymaps for the sidebar window
 M.set_sidebar_keymaps = function()
    local fapi = require('floaterm.api')
    local opts = { buffer = state.sidebuf }
@@ -121,7 +113,6 @@ M.set_sidebar_keymaps = function()
    map('n', '<C-k>', function() fapi.cycle_term_bufs('prev') end, opts)
 end
 
--- Build and render the sidebar window + its volt content and keymaps
 M.render_sidebar = function(pos_row, pos_col)
    local sidebar_w = state.config.sidebar_w
    state.sidebar_win_opts = {
@@ -146,7 +137,6 @@ M.render_sidebar = function(pos_row, pos_col)
    vim.bo[state.sidebuf].ft = 'FloatermSidebar'
 end
 
--- Build and render the terminal window (anchored to the sidebar)
 M.render_terminal = function()
    local sidebar_w = state.config.sidebar_w
    state.term_win_opts = {
@@ -201,7 +191,6 @@ M.switch_buf = function(buf)
          end,
       })
 
-      -- Remove volt's default close/cycle maps in favour of our own navigation
       for _, b in ipairs({ state.buf, state.sidebuf }) do
          for _, key in ipairs({ 'q', '<Esc>', '<C-t>' }) do
             pcall(vim.keymap.del, 'n', key, { buffer = b })
@@ -231,8 +220,6 @@ M.get_buf_on_cursor = function()
    return row
 end
 
--- Register floaterm's autocmds once. The state.is_open guards make them no-ops
--- while floaterm is closed, so they don't need re-registering per open.
 M.set_autocmds = function()
    local floaterm = require('floaterm')
    local grp = api.nvim_create_augroup('Floaterm', { clear = true })
