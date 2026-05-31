@@ -19,7 +19,7 @@ end
 M.convert_buf2term = function(cmd)
    if cmd then
       cmd = type(cmd) == 'function' and cmd() or cmd
-      cmd = { shell, '-c', cmd .. '; ' .. shell }
+      cmd = { shell, '-c', cmd }
    else
       cmd = { shell }
    end
@@ -85,7 +85,9 @@ end
 
 M.set_termwin_hl = function() vim.wo[state.win].winhl = 'Normal:FloatermNormal,FloatBorder:FloatermBorder' end
 
-M.set_sidebar_hl = function() vim.wo[state.sidewin].winhl = 'Normal:FloatermSidebarNormal,FloatBorder:FloatermSidebarBorder' end
+M.set_sidebar_hl = function()
+   vim.wo[state.sidewin].winhl = 'Normal:FloatermSidebarNormal,FloatBorder:FloatermSidebarBorder'
+end
 
 M.set_highlights = function()
    local color = require('volt.color')
