@@ -23,7 +23,7 @@ M.new_term = function(opts)
 
    if not opts.hidden then utils.switch_buf(details.buf) end
 
-   utils.add_keymap(#state.terminals, details.buf)
+   utils.set_term_keymaps()
 end
 
 M.switch_wins = function()
@@ -63,6 +63,7 @@ M.delete_term = function(buf)
       table.remove(state.terminals, index)
 
       if #state.terminals == 0 then M.new_term() end
+      utils.set_term_keymaps()
 
       newbuf_i = #state.terminals == 1 and 1 or newbuf_i
 

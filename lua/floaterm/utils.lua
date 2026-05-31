@@ -39,16 +39,24 @@ M.add_keymap = function(key, buf)
    map('n', tostring(key), function() M.switch_buf(buf) end, { buffer = state.sidebuf })
 end
 
-M.gen_term_bufs = function()
-   for i, _ in ipairs(state.terminals) do
-      state.terminals[i] = vim.tbl_extend('force', M.new_term(), state.terminals[i])
-      local buf = state.terminals[i].buf
-      M.add_keymap(i, buf)
+M.set_term_keymaps = function()
+   for i = 1, 9 do
+      pcall(vim.keymap.del, 'n', tostring(i), { buffer = state.sidebuf })
+   end
+   for i, term in ipairs(state.terminals) do
+      if i > 9 then break end
+      M.add_keymap(i, term.buf)
    end
 end
 
+M.gen_term_bufs = function()
+   for i, _ in ipairs(state.terminals) do
+      state.terminals[i] = vim.tbl_extend('force', M.new_term(), state.terminals[i])
+   end
+   M.set_term_keymaps()
+end
+
 local num_icons = {
-   '󰎡',
    '󰎤',
    '󰎧',
    '󰎪',

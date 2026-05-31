@@ -5,11 +5,8 @@ local M = {
    prev_win_focussed = 0,
 
    config = {
-      autoinsert = true,
-      sidebar_w = 20,
-      contrast = 3,
       size = {
-         h = 0.6,
+         h = 0.7,
          w = 0.7,
          max_h = nil,
          max_w = nil,
@@ -18,6 +15,9 @@ local M = {
          toggle = nil,
          send = nil,
       },
+      sidebar_w = 20,
+      contrast = 3,
+      autoinsert = true,
       terminals = {
          { name = 'main' },
       },
