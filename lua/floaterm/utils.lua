@@ -107,7 +107,7 @@ M.set_highlights = function()
    local diffadd = api.nvim_get_hl(0, { name = 'DiffAdd', link = false })
 
    api.nvim_set_hl(0, 'FloatermNormal', { bg = darker })
-   api.nvim_set_hl(0, 'FloatermBorder', { bg = darker, fg = darker })
+   api.nvim_set_hl(0, 'FloatermBorder', { bg = "NONE", fg = "NONE" })
    api.nvim_set_hl(0, 'FloatermSidebarNormal', { bg = lighter })
    api.nvim_set_hl(0, 'FloatermSidebarBorder', { bg = lighter, fg = lighter })
    api.nvim_set_hl(0, 'FloatermActive', { fg = diffadd.fg })
@@ -158,10 +158,10 @@ M.render_terminal = function()
       col = sidebar_w + 1,
       win = state.sidewin,
       width = state.w - sidebar_w,
-      height = state.h,
+      height = state.h + 2,
       relative = 'win',
       style = 'minimal',
-      border = { { ' ', 'FloatermBorder' } },
+      border = "none",
       zindex = 100,
    }
    state.win = api.nvim_open_win(state.buf, true, state.term_win_opts)

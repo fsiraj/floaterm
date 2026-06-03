@@ -51,7 +51,7 @@ M.open = function()
    state.h = utils.resolve_dim(conf.size.h, vim.o.lines, conf.size.max_h)
    state.w = utils.resolve_dim(conf.size.w, vim.o.columns, conf.size.max_w)
 
-   local pos_row = (vim.o.lines / 2 - state.h / 2) - 1
+   local pos_row = (vim.o.lines / 2 - state.h / 2)
    local pos_col = (vim.o.columns / 2 - state.w / 2)
 
    utils.set_highlights()
