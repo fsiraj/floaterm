@@ -61,10 +61,10 @@ M.open = function()
 end
 
 M.close = function()
-   api.nvim_win_close(state.win, false)
-   api.nvim_win_close(state.sidewin, false)
+   if api.nvim_win_is_valid(state.win) then api.nvim_win_close(state.win, false) end
+   if api.nvim_win_is_valid(state.sidewin) then api.nvim_win_close(state.sidewin, false) end
    state.is_open = false
-   api.nvim_set_current_win(state.prev_win_focussed)
+   if api.nvim_win_is_valid(state.prev_win_focussed) then api.nvim_set_current_win(state.prev_win_focussed) end
 end
 
 M.toggle = function()

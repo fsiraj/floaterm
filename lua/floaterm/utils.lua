@@ -56,17 +56,7 @@ M.gen_term_bufs = function()
    M.set_term_keymaps()
 end
 
-local num_icons = {
-   '󰎤',
-   '󰎧',
-   '󰎪',
-   '󰎭',
-   '󰎱',
-   '󰎳',
-   '󰎶',
-   '󰎹',
-   '󰎼',
-}
+local num_icons = { '󰎤', '󰎧', '󰎪', '󰎭', '󰎱', '󰎳', '󰎶', '󰎹', '󰎼' }
 
 M.sidebar_lines = function()
    local lines = {}
@@ -107,7 +97,7 @@ M.set_highlights = function()
    local diffadd = api.nvim_get_hl(0, { name = 'DiffAdd', link = false })
 
    api.nvim_set_hl(0, 'FloatermNormal', { bg = darker })
-   api.nvim_set_hl(0, 'FloatermBorder', { bg = "NONE", fg = "NONE" })
+   api.nvim_set_hl(0, 'FloatermBorder', { bg = 'NONE', fg = 'NONE' })
    api.nvim_set_hl(0, 'FloatermSidebarNormal', { bg = lighter })
    api.nvim_set_hl(0, 'FloatermSidebarBorder', { bg = lighter, fg = lighter })
    api.nvim_set_hl(0, 'FloatermActive', { fg = diffadd.fg })
@@ -161,7 +151,7 @@ M.render_terminal = function()
       height = state.h + 2,
       relative = 'win',
       style = 'minimal',
-      border = "none",
+      border = 'none',
       zindex = 100,
    }
    state.win = api.nvim_open_win(state.buf, true, state.term_win_opts)
@@ -187,12 +177,9 @@ M.switch_buf = function(buf)
       vim.bo[buf].ft = 'Floaterm'
       M.convert_buf2term(details[1].cmd)
 
-      map({ 't', 'n' }, '<C-h>', function() require('floaterm.api').switch_wins() end, { buffer = state.buf })
-
+      map({ 'n', 't' }, '<C-h>', function() require('floaterm.api').switch_wins() end, { buffer = state.buf })
       map({ 'n', 't' }, '<C-j>', function() require('floaterm.api').cycle_term_bufs('next') end, { buffer = state.buf })
-
       map({ 'n', 't' }, '<C-k>', function() require('floaterm.api').cycle_term_bufs('prev') end, { buffer = state.buf })
-
       map('n', '<C-l>', function() require('floaterm.api').switch_wins() end, { buffer = state.buf })
 
       require('volt').mappings({
@@ -241,12 +228,33 @@ M.set_autocmds = function()
    -- Keep our highlights in sync with the colorscheme (restyles an open floaterm live)
    api.nvim_create_autocmd('ColorScheme', { group = grp, callback = M.set_highlights })
 
+   -- A terminal's process finished -> mark it so the next key press (which wipes the
+   -- buffer and fires WinClosed) tears down the whole UI instead of switching terminals.
+   api.nvim_create_autocmd('TermClose', {
+      group = grp,
+      callback = function(args)
+         local found = M.get_term_by_key(args.buf)
+         if found then found[2].exited = true end
+      end,
+   })
+
    -- A managed terminal window closed (process exit, :q, ...) -> drop it from the list
    api.nvim_create_autocmd('WinClosed', {
       group = grp,
       callback = function(args)
          vim.schedule(function()
-            if state.is_open and M.get_term_by_key(args.buf) then require('floaterm.api').delete_term(args.buf) end
+            local found = state.is_open and M.get_term_by_key(args.buf)
+            if not found then return end
+            if found[2].exited then
+               -- Finished terminal: keep the others (their output survives the reopen)
+               -- but close the UI. state.buf is reset so reopen lands on a live terminal.
+               table.remove(state.terminals, found[1])
+               state.buf = nil
+               if #state.terminals == 0 then state.terminals = nil end
+               floaterm.close()
+            else
+               require('floaterm.api').delete_term(args.buf)
+            end
          end)
       end,
    })
