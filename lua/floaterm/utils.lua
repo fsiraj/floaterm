@@ -87,20 +87,26 @@ M.set_sidebar_hl = function()
    vim.wo[state.sidewin].winhl = 'Normal:FloatermSidebarNormal,FloatBorder:FloatermSidebarBorder'
 end
 
+-- Compute our highlight groups from the global Normal. Only call this at clean
+-- moments (plugin load + ColorScheme) -- never while a floaterm terminal is
+-- open. A live terminal answers the child's background query by resolving the
+-- *focused* window's effective Normal, and if a winhl-redirected window (e.g.
+-- Normal:NormalFloat) is focused, that color leaks into the global Normal and
+-- persists. Reading it then would miscolor the terminal and sidebar.
 M.set_highlights = function()
    local color = require('volt.color')
    local normal = api.nvim_get_hl(0, { name = 'Normal', link = false })
-   local normal_bg = normal.bg and ('#%06x'):format(normal.bg) or '#000000'
+   local bg = normal.bg and ('#%06x'):format(normal.bg) or '#000000'
    local contrast = state.config.contrast
-   local darker = color.change_hex_lightness(normal_bg, -contrast)
-   local lighter = color.change_hex_lightness(normal_bg, contrast)
-   local diffadd = api.nvim_get_hl(0, { name = 'DiffAdd', link = false })
+   local darker = color.change_hex_lightness(bg, -contrast)
+   local lighter = color.change_hex_lightness(bg, contrast)
+   local diffadd = api.nvim_get_hl(0, { name = '@diff.plus', link = false })
 
-   api.nvim_set_hl(0, 'FloatermNormal', { bg = darker })
-   api.nvim_set_hl(0, 'FloatermBorder', { bg = 'NONE', fg = 'NONE' })
-   api.nvim_set_hl(0, 'FloatermSidebarNormal', { bg = lighter })
-   api.nvim_set_hl(0, 'FloatermSidebarBorder', { bg = lighter, fg = lighter })
-   api.nvim_set_hl(0, 'FloatermActive', { fg = diffadd.fg })
+   api.nvim_set_hl(0, 'FloatermNormal', { bg = darker, default = true })
+   api.nvim_set_hl(0, 'FloatermBorder', { bg = 'NONE', fg = 'NONE', default = true })
+   api.nvim_set_hl(0, 'FloatermSidebarNormal', { bg = lighter, default = true })
+   api.nvim_set_hl(0, 'FloatermSidebarBorder', { bg = lighter, fg = lighter, default = true })
+   api.nvim_set_hl(0, 'FloatermActive', { fg = diffadd.fg, default = true })
 end
 
 M.set_sidebar_keymaps = function()
@@ -225,7 +231,9 @@ M.set_autocmds = function()
    local floaterm = require('floaterm')
    local grp = api.nvim_create_augroup('Floaterm', { clear = true })
 
-   -- Keep our highlights in sync with the colorscheme (restyles an open floaterm live)
+   -- Compute highlights now; the startup ColorScheme fired before this plugin
+   -- loaded, so do it once on load, then keep them in sync with the colorscheme.
+   M.set_highlights()
    api.nvim_create_autocmd('ColorScheme', { group = grp, callback = M.set_highlights })
 
    -- A terminal's process finished -> mark it so the next key press (which wipes the

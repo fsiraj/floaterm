@@ -54,7 +54,6 @@ M.open = function()
    local pos_row = (vim.o.lines / 2 - state.h / 2)
    local pos_col = (vim.o.columns / 2 - state.w / 2)
 
-   utils.set_highlights()
    utils.render_sidebar(pos_row, pos_col)
    utils.render_terminal()
    utils.switch_buf(state.buf)
