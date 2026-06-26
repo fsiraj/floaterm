@@ -186,7 +186,7 @@ M.switch_buf = function(buf)
       map({ 'n', 't' }, '<C-h>', function() require('floaterm.api').switch_wins() end, { buffer = state.buf })
       map({ 'n', 't' }, '<C-j>', function() require('floaterm.api').cycle_term_bufs('next') end, { buffer = state.buf })
       map({ 'n', 't' }, '<C-k>', function() require('floaterm.api').cycle_term_bufs('prev') end, { buffer = state.buf })
-      map('n', '<C-l>', function() require('floaterm.api').switch_wins() end, { buffer = state.buf })
+      map({ 'n', 't' }, '<C-l>', function() require('floaterm.api').switch_wins() end, { buffer = state.buf })
 
       require('volt').mappings({
          bufs = { state.buf, state.sidebuf },
