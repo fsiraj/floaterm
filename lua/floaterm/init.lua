@@ -14,6 +14,7 @@ M.setup = function(opts)
    if maps.toggle then vim.keymap.set({ 'n', 't' }, maps.toggle, M.toggle, { desc = 'Floaterm: Toggle' }) end
    if maps.send then vim.keymap.set('n', maps.send, function() M.send() end, { desc = 'Floaterm: Run command' }) end
 
+   utils.set_highlights()
    utils.set_autocmds()
 end
 

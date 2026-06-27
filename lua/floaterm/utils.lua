@@ -87,15 +87,24 @@ M.set_sidebar_hl = function()
    vim.wo[state.sidewin].winhl = 'Normal:FloatermSidebarNormal,FloatBorder:FloatermSidebarBorder'
 end
 
--- Compute our highlight groups from the global Normal. Only call this at clean
--- moments (plugin load + ColorScheme) -- never while a floaterm terminal is
--- open. A live terminal answers the child's background query by resolving the
--- *focused* window's effective Normal, and if a winhl-redirected window (e.g.
--- Normal:NormalFloat) is focused, that color leaks into the global Normal and
--- persists. Reading it then would miscolor the terminal and sidebar.
+-- nvim_get_hl resolves Normal through the *current* window's winhl, so if a
+-- floaterm window (winhl Normal:Floaterm*) is current we'd read our own derived
+-- color instead of the real Normal -- and recomputing from that drifts/breaks the
+-- colors on every ColorScheme. Escape to a window that doesn't redirect Normal.
+M.read_true_normal = function()
+   local read = function() return api.nvim_get_hl(0, { name = 'Normal', link = false }) end
+   if not vim.wo[api.nvim_get_current_win()].winhl:find('Normal:') then return read() end
+   for _, w in ipairs(api.nvim_list_wins()) do
+      if not vim.wo[w].winhl:find('Normal:') then return api.nvim_win_call(w, read) end
+   end
+   return read() -- fallback: every window redirects Normal
+end
+
+-- Compute our highlight groups from the global Normal. Safe to call any time
+-- (e.g. ColorScheme) thanks to read_true_normal, even with a floaterm open.
 M.set_highlights = function()
    local color = require('volt.color')
-   local normal = api.nvim_get_hl(0, { name = 'Normal', link = false })
+   local normal = M.read_true_normal()
    local bg = normal.bg and ('#%06x'):format(normal.bg) or '#000000'
    local contrast = state.config.contrast
    local darker = color.change_hex_lightness(bg, -contrast)
@@ -231,9 +240,7 @@ M.set_autocmds = function()
    local floaterm = require('floaterm')
    local grp = api.nvim_create_augroup('Floaterm', { clear = true })
 
-   -- Compute highlights now; the startup ColorScheme fired before this plugin
-   -- loaded, so do it once on load, then keep them in sync with the colorscheme.
-   M.set_highlights()
+   -- Highlights first set in setup, but also update on ColorScheme events
    api.nvim_create_autocmd('ColorScheme', { group = grp, callback = M.set_highlights })
 
    -- A terminal's process finished -> mark it so the next key press (which wipes the
