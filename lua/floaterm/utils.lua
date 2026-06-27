@@ -16,14 +16,16 @@ M.resolve_dim = function(value, total, max)
    return math.floor(math.min(n, cap))
 end
 
-M.convert_buf2term = function(cmd)
-   if cmd then
-      cmd = type(cmd) == 'function' and cmd() or cmd
-      cmd = { shell, '-c', cmd }
-   else
-      cmd = { shell }
+M.convert_buf2term = function(cmd, persist, env)
+   cmd = cmd and (type(cmd) == 'function' and cmd() or cmd)
+   local job_cmd = (cmd and not persist) and { shell, '-c', cmd } or { shell }
+   env = vim.tbl_extend('force', state.config.env or {}, env or {})
+   local id = vim.fn.jobstart(job_cmd, { term = true, env = env })
+   if cmd and persist then
+      local send = function() pcall(vim.fn.chansend, id, cmd .. '\r') end
+      local delay = state.config.delay
+      if delay > 0 then vim.defer_fn(send, delay) else send() end
    end
-   vim.fn.jobstart(cmd, { term = true })
 end
 
 M.new_term = function(opts)
@@ -190,7 +192,7 @@ M.switch_buf = function(buf)
 
    if vim.bo[buf].buftype ~= 'terminal' then
       vim.bo[buf].ft = 'Floaterm'
-      M.convert_buf2term(details[1].cmd)
+      M.convert_buf2term(details[1].cmd, details[1].persist, details[1].env)
 
       map({ 'n', 't' }, '<C-h>', function() require('floaterm.api').switch_wins() end, { buffer = state.buf })
       map({ 'n', 't' }, '<C-j>', function() require('floaterm.api').cycle_term_bufs('next') end, { buffer = state.buf })

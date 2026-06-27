@@ -18,6 +18,8 @@ local M = {
       sidebar_w = 20,
       contrast = 3,
       autoinsert = true,
+      env = {},
+      delay = 0,
       terminals = {
          { name = 'main' },
       },

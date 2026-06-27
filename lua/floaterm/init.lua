@@ -20,20 +20,21 @@ end
 
 M.is_open = function() return state.is_open == true end
 
-M.send = function(cmd, name)
+M.send = function(cmd, opts)
    if not cmd then
       vim.ui.input({ prompt = 'cmd: ' }, function(input)
          if input and input ~= '' then M.send(input) end
       end)
       return
    end
-   name = name or cmd
+   opts = opts or {}
+   local name = opts.name or cmd
    if not M.is_open() then M.open() end
    local term = utils.get_term_by_key(name, 'name')
    if term then
       utils.switch_buf(term[2].buf)
    else
-      require('floaterm.api').new_term({ cmd = cmd, name = name })
+      require('floaterm.api').new_term({ cmd = cmd, name = name, persist = opts.persist, env = opts.env })
    end
 end
 

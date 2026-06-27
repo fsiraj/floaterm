@@ -39,10 +39,16 @@ A beautiful toggleable floating window for managing terminal buffers within Neov
    -- enter insert mode when focusing a terminal
   autoinsert = true,
 
+  -- env vars (string values) applied to every terminal; per-terminal `env` merges on top
+  env = { NO_FF = "1" },
+
+  -- ms to wait before typing a persist terminal's cmd, useful to delay till prompt is ready
+  delay = 0,
+
   -- terminals opened on first launch, list or function() -> list
   terminals = {
-    -- may also specify `cmd` as string or function() -> string
-    { name = "main" }, 
+    -- may also specify `cmd` (string or function() -> string) and `env` (table)
+    { name = "main" },
   },
 }
 ```
@@ -70,16 +76,17 @@ The window recomputes its geometry on every open and debounces `VimResized`, so 
 
 `require("floaterm")` exposes:
 
-| Function             | Description                                 |
-| -------------------- | ------------------------------------------- |
-| `setup(opts)`        | Apply config and register keymaps/autocmds. |
-| `toggle()`           | Open or close the window.                   |
-| `open()` / `close()` | Open / close explicitly.                    |
-| `is_open()`          | Whether the window is open.                 |
-| `send(cmd, name)`    | Send `cmd` to terminal with `name`          |
+| Function             | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| `setup(opts)`        | Apply config and register keymaps/autocmds.               |
+| `toggle()`           | Open or close the window.                                 |
+| `open()` / `close()` | Open / close explicitly.                                  |
+| `is_open()`          | Whether the window is open.                               |
+| `send(cmd, opts)`    | Send `cmd` to a terminal; `opts = { name, persist, env }` |
 
 ```lua
-require("floaterm").send("btop +t", "btop") -- open/focus a "btop" terminal
+require("floaterm").send("btop +t", { name = "btop" }) -- open/focus a "btop" terminal
+require("floaterm").send("npm run dev", { name = "dev", persist = true }) -- stay at a live shell after it exits
 ```
 
 ## Highlights
