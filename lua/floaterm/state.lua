@@ -16,7 +16,6 @@ local M = {
          send = nil,
       },
       sidebar_w = 20,
-      contrast = 3,
       autoinsert = true,
       env = {},
       delay = 0,

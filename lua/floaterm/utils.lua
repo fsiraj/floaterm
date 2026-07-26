@@ -106,14 +106,15 @@ end
 -- (e.g. ColorScheme) thanks to read_true_normal, even with a floaterm open.
 M.set_highlights = function()
    local color = require('volt.color')
-   local normal = M.read_true_normal()
-   local bg = normal.bg and ('#%06x'):format(normal.bg) or '#000000'
-   local contrast = state.config.contrast
-   local darker = color.change_hex_lightness(bg, -contrast)
-   local lighter = color.change_hex_lightness(bg, contrast)
+   local tohex = function(n) return n and ('#%06x'):format(n) or nil end
+   local normal_bg = tohex(M.read_true_normal().bg) or '#000000'
+   local float_bg = tohex(api.nvim_get_hl(0, { name = 'NormalFloat', link = false }).bg) or normal_bg
+   local lightness = function(hex) return (select(3, color.hex2hsl(hex))) end
+   local base = lightness(float_bg) > lightness(normal_bg) and float_bg or normal_bg
+   local lighter = color.change_hex_lightness(base, 5)
    local diffadd = api.nvim_get_hl(0, { name = '@diff.plus', link = false })
 
-   api.nvim_set_hl(0, 'FloatermNormal', { bg = darker, default = true })
+   api.nvim_set_hl(0, 'FloatermNormal', { link = 'NormalFloat', default = true })
    api.nvim_set_hl(0, 'FloatermBorder', { bg = 'NONE', fg = 'NONE', default = true })
    api.nvim_set_hl(0, 'FloatermSidebarNormal', { bg = lighter, default = true })
    api.nvim_set_hl(0, 'FloatermSidebarBorder', { bg = lighter, fg = lighter, default = true })

@@ -33,9 +33,6 @@ A beautiful toggleable floating window for managing terminal buffers within Neov
   -- terminal-list sidebar width, in columns
   sidebar_w = 20,
 
-  -- HSL lightness shift from Normal bg (sidebar +, terminal -)
-  contrast = 3,
-
    -- enter insert mode when focusing a terminal
   autoinsert = true,
 
