@@ -107,17 +107,19 @@ end
 M.set_highlights = function()
    local color = require('volt.color')
    local tohex = function(n) return n and ('#%06x'):format(n) or nil end
+   local lightness = function(hex) return (select(3, color.hex2hsl(hex))) end
+
    local normal_bg = tohex(M.read_true_normal().bg) or '#000000'
    local float_bg = tohex(api.nvim_get_hl(0, { name = 'NormalFloat', link = false }).bg) or normal_bg
-   local lightness = function(hex) return (select(3, color.hex2hsl(hex))) end
-   local base = lightness(float_bg) > lightness(normal_bg) and float_bg or normal_bg
-   local lighter = color.change_hex_lightness(base, 5)
+   local light = vim.o.background == 'light'
+   local base = (lightness(float_bg) > lightness(normal_bg)) ~= light and float_bg or normal_bg
+   local sidebar = color.change_hex_lightness(base, light and -2 or 5)
    local diffadd = api.nvim_get_hl(0, { name = '@diff.plus', link = false })
 
    api.nvim_set_hl(0, 'FloatermNormal', { link = 'NormalFloat', default = true })
    api.nvim_set_hl(0, 'FloatermBorder', { bg = 'NONE', fg = 'NONE', default = true })
-   api.nvim_set_hl(0, 'FloatermSidebarNormal', { bg = lighter, default = true })
-   api.nvim_set_hl(0, 'FloatermSidebarBorder', { bg = lighter, fg = lighter, default = true })
+   api.nvim_set_hl(0, 'FloatermSidebarNormal', { bg = sidebar, default = true })
+   api.nvim_set_hl(0, 'FloatermSidebarBorder', { bg = sidebar, fg = sidebar, default = true })
    api.nvim_set_hl(0, 'FloatermActive', { fg = diffadd.fg, default = true })
 end
 
